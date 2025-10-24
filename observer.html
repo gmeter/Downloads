@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <link rel="icon" href="favicon.ico">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RippleNav Observer</title>
+    <style>
+        :root {
+            /* Dark theme variables */
+            --ripple-background-color: #8afbe465;
+            --background-color: #e3e3e3;
+            --text-color: #2e2e2ecb;
+            --link-color: #0ff;
+            --border-color: #555;
+            --p1: #d3d3d363;
+            --p2: #b4b4d35a;
+            --h-color: #278cffe9;
+            --text-shadow: 1px 1px 2px rgb(50, 50, 50);
+            --happy: #ffee00;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                /* Dark theme variables */
+                --ripple-background-color: #8afbe465;
+                --background-color: #404040;
+                --text-color: #ffffffcb;
+                --link-color: #0ff;
+                --border-color: #555;
+                --p1: #65666763;
+                --p2: #4040405a;
+                --h-color: #278cffe9;
+                --text-shadow: 1px 1px 2px rgba(0, 0, 0, 1.0);
+                --happy: #ecdd03;
+            }
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: sans-serif;
+            font-size: 1.17rem;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            border-color: #555;
+            display: flex;
+            flex-direction: column;
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+
+        h1,
+        h2,
+        h3 {
+            margin: 0;
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--h-color);
+        }
+
+        p {
+            margin: 0;
+            padding: 10px;
+            line-height: 1.5em;
+            color: var(--text-color);
+        }
+
+        a {
+            color: #0ff;
+            font-family: "Lucida Grande", Helvetica, Arial, sans-serif;
+        }
+
+        text {
+            font-family: "Lucida Grande", Helvetica, Arial, sans-serif;
+            text-shadow: var(--text-shadow);
+            color: var(--header-text-color);
+            font-weight: bold;
+        }
+
+        image-text {
+            font-family: "Lucida Grande", Helvetica, Arial, sans-serif;
+            text-shadow: var(--text-shadow);
+            color: var(--happy);
+            font-weight: bold;
+        }
+
+        p:nth-of-type(odd) {
+            background-color: var(--p1);
+        }
+
+        p:nth-of-type(even) {
+            background-color: var(--p2);
+        }
+
+        .top-panel {
+            height: 25vh;
+            padding: 10px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-shrink: 0;
+        }
+
+        .bottom-panel {
+            flex-grow: 1;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Styles for the top panel elements */
+        #hh {
+            font-weight: bold;
+        }
+
+        .slider {
+            position: relative;
+            z-index: -1;
+            max-width: 100%;
+            background-repeat: repeat-x;
+            padding: 40px;
+            text-align: center;
+            background: url('data:image/png;base64,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') 0 0 repeat;
+            border: 1px solid #333;
+        }
+
+        #sens {
+            padding: 5px;
+            border: 1px solid #ccc;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .FF {
+            position: relative;
+            z-index: 1;
+            background: var(--ripple-background-color);
+            width: 90%;
+            margin: 0 auto 5px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 0 20px 0 rgba(0, 0, 0, 0.2), 0 5px 5px 0 rgba(0, 0, 0, 0.24);
+        }
+
+
+        .InputElement {
+            color: var(--color4);
+            background-color: #f8e4e9 !important;
+            border-color: #9aecba;
+            padding: 6px 12px;
+            border-radius: 5px;
+            border: 2px solid #9682c8 !important;
+            border-collapse: collapse;
+            margin: 0px;
+        }
+
+        .slider2 {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            background: #525252 !important;
+            padding: 0px;
+            outline: none;
+            opacity: 0.9;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+        }
+
+        .slider2:hover {
+            opacity: 1;
+        }
+
+        .slider2::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+        }
+
+        .slider2::-moz-range-thumb {
+            width: 25px;
+            height: 25px;
+            background: #4CAF50;
+            cursor: pointer;
+        }
+
+        /* NEW: Styles for the new connection controls */
+        #connection-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        #connection-controls input {
+            flex-grow: 1;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        #connection-controls button {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="top-panel">
+        <div class="FF" id="f2">
+            <div class="slider" id="m1"></div>
+            <input type="range" min="1" max="200" value="30" class="slider2" id="myRange">
+            <div id="sens">30</div>
+        </div>
+    </div>
+
+    <div class="bottom-panel">
+        <h3>Connection</h3>
+        <p>Enter the address provided by the host and click Connect.</p>
+        <div id="connection-controls">
+            <label for="ip">Host Address:</label>
+            <input type="text" id="ip" value="" placeholder="e.g., 123.45.67.89:8080">
+            <button id="connectBtn">Connect</button>
+            <button id="disconnectBtn" disabled>Disconnect</button>
+        </div>
+        <p><b>Status:</b> <span id="status">Idle</span></p>
+        <p><b>Last Received Value:</b> <span id="moodValue">N/A</span></p>
+    </div>
+
+    <script>
+        // --- Get references to all DOM elements ---
+        const slider = document.getElementById("m1");
+        const sensitivitySlider = document.getElementById("myRange");
+        const sensitivityDisplay = document.getElementById("sens");
+
+        // NEW: Connection control elements
+        const ipInput = document.getElementById('ip');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const statusEl = document.getElementById('status');
+        const moodValueEl = document.getElementById('moodValue');
+
+        // --- Global state variables ---
+        let ws; // The WebSocket object
+        let isSocketConnected = false; // Our replacement for 'moduleInitialized'
+        let animationFrameId; // To start/stop the animation loop
+
+        // NEW: This variable will hold the latest data from the server.
+        // The animation loop will read from this variable.
+        let latestMoodValue = 200000; // Start at the midpoint (0 to 400k range)
+
+        // This variable is for the smoothing (lerp) effect
+        let last_sPos = 0;
+
+        // --- Event Listeners ---
+        sensitivitySlider.addEventListener('input', function () {
+            sensitivityDisplay.innerHTML = this.value;
+        });
+
+        // NEW: WebSocket button listeners
+        connectBtn.addEventListener('click', connect);
+        disconnectBtn.addEventListener('click', disconnect);
+
+        // --- Core Functions ---
+
+        // NEW: WebSocket connection logic
+        function connect() {
+            const address = ipInput.value.trim();
+            if (!address) {
+                alert('Please enter a host address.');
+                return;
+            }
+
+            statusEl.textContent = `Connecting to ws://${address}/ws...`;
+            ws = new WebSocket(`ws://${address}/ws`);
+
+            ws.onopen = function () {
+                statusEl.textContent = 'Connected';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                isSocketConnected = true;
+                runAnimationLoop(); // Start the animation now that we are connected
+            };
+
+            ws.onmessage = function (event) {
+                const data = JSON.parse(event.data);
+                if (data.moodValue !== undefined) {
+                    // This is the CRITICAL part: update our global variable
+                    // with the new data from the server.
+                    latestMoodValue = data.moodValue;
+                    moodValueEl.textContent = latestMoodValue.toFixed(2);
+                }
+            };
+
+            ws.onclose = function () {
+                statusEl.textContent = 'Disconnected';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                isSocketConnected = false;
+                stopAnimationLoop(); // Stop animation on disconnect
+            };
+
+            ws.onerror = function (error) {
+                statusEl.textContent = `Error! Could not connect.`;
+                console.error('WebSocket Error: ', error);
+                isSocketConnected = false;
+                stopAnimationLoop();
+            };
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close();
+            }
+        }
+
+        // A simple linear interpolation function for smooth movement
+        function lerp(v0, v1, t) {
+            return (((1 - t) * v0) + (t * v1));
+        }
+
+        // This is the animation loop, started when the WebSocket connects
+        function runAnimationLoop() {
+            // The inner function `frame` is what runs on every screen refresh
+            function frame() {
+                if (!isSocketConnected) return; // Stop if we lose connection
+
+                // 1. Get the raw target position from our global variable.
+                // The '0.5' scaling factor is kept from your original code.
+                let target_sPos = latestMoodValue * 0.5;
+
+                // 2. Use lerp to smoothly move the visual position towards the new target.
+                let smoothed_sPos = lerp(target_sPos, last_sPos, 0.95);
+
+                // 3. Update the last position for the next frame's smoothing.
+                last_sPos = smoothed_sPos;
+
+                // 4. Apply sensitivity from the slider.
+                let final_sPos = smoothed_sPos * (sensitivitySlider.value / 100);
+
+                // 5. Update the CSS to move the background image.
+                slider.style.backgroundPosition = final_sPos + "px";
+
+                // 6. Request the next frame to continue the loop.
+                animationFrameId = window.requestAnimationFrame(frame);
+            }
+
+            // Initial call to start the loop
+            animationFrameId = window.requestAnimationFrame(frame);
+        }
+
+        // NEW: Function to explicitly stop the animation loop
+        function stopAnimationLoop() {
+            if (animationFrameId) {
+                window.cancelAnimationFrame(animationFrameId);
+            }
+        }
+
+    </script>
+
+</body>
+
+</html>
